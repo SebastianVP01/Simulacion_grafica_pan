@@ -1,0 +1,249 @@
+<!-- clase del 5 de marzo 2024 -->
+
+<!DOCTYPE html>
+<html>
+    <style>
+        #myCanvas {
+            border: blue 2px solid;
+            background-color: bisque;
+        }
+        .button {
+            border: blue 2px solid;
+            background-color: bisque;
+            color: white;
+            padding: 10px 32px;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 80px;
+            height: 6px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+    </style>
+    <head>
+        <title>N Body Collisions</title>
+    </head>
+    <body>
+        <canvas id="myCanvas"></canvas>
+        <button class="class" onclick="setupScene()">Restart</button>
+        Restitution: <input type="range" min="0" max="1" value="1" id="restitutionSlider" class="slider">
+
+        <script>
+            // Canvas
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            canvas.width = window.innerWidth - 50;
+            canvas.height = window.innerHeight - 50;
+
+            var minWidth4Sim = 3.0;
+            var cScale = Math.min(canvas.width,canvas.height) / minWidth4Sim;
+            var simWidth = canvas.width / cScale;
+            var simHeight = canvas.height / cScale;
+
+            // transform coordinate system simulation to canvas
+            function cX(pos) {
+                return pos.x * cScale;
+            }
+        
+            function cY(pos) {
+                return canvas.height - (pos.y * cScale);
+            }
+
+            //vector math
+            class Vector2{
+                constructor(x=0.0,y=0.0) {
+                    this.x = x;
+                    this.y = y;
+                }
+
+                set(vec) {
+                    this.x = vec.x;
+                    this.y = vec.y;
+                }
+
+                clone() {
+                    return new Vector2(this.x,this.y); //fix
+                }
+
+                add(vec,sc=1.0){
+                    this.x += vec.x * sc;
+                    this.y += vec.y * sc;
+                    return this;
+                }
+
+                addVectors(a,b) {
+                    this.x = a.x + b.x;
+                    this.y = a.y + b.y;
+                    return this;
+                }
+
+                subtract(vec,sc=1.0){
+                    this.x -= vec.x * sc;
+                    this.y -= vec.y * sc;
+                    return this;
+                }
+
+                subtractVectors(a,b) {
+                    this.x = a.x - b.x;
+                    this.y = a.y - b.y;
+                    return this;
+                }
+
+                length() {
+                    return Math.sqrt(this.x*this.x + this.y*this.y);
+                }
+
+                scale(sc) {
+                    this.x *= sc;
+                    this.y *= sc;
+                }
+
+                dot(vec) {
+                    return this.x*vec.x + this.y*vec.y;
+                }
+            }
+
+            // physics scene
+            class Ball {
+                constructor(radius,mass,pos,vel) {
+                    this.radius = radius;
+                    this.mass = mass;
+                    this.pos = pos.clone();
+                    this.vel = vel.clone();
+                }
+                integrate(dt,gravity) {
+                    this.vel.add(gravity, dt);
+                    this.pos.add(this.vel, dt);
+                }
+            }
+
+            var physicsScene = 
+            {
+                gravity : new Vector2(0.0 , 0.0),
+                dt: 1.0 / 30.0,
+                worldSize : new Vector2(simWidth,simHeight),
+                paused: true,
+                balls: [],
+                restitution : 0.0
+            };
+
+            function setupScene()
+            {
+                physicsScene.balls = [];
+                var numBalls = 20;
+
+                for (i=0; i<numBalls; i++) {
+                    var radius = 0.1 + Math.random() * 0.1;
+                    var mass = Math.PI * radius * radius;
+                    var pos = new Vector2(Math.random()*simWidth,Math.random()*simHeight);
+                    var vel = new Vector2(-1.0 + 2.0 * Math.random(), -1.0 + 2.0 * Math.random());
+
+                    physicsScene.balls.push(new Ball(radius, mass,pos,vel));
+                }
+            }
+
+            
+            //visualize data
+            function draw(){
+                // draw physics scene
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.fillstyle = "#FF8800";
+                for (i = 0; i < physicsScene.balls.length; i++) {
+                    var ball = physicsScene.balls[i];
+                    ctx.beginPath();			
+                    ctx.arc(
+                        cX(ball.pos), cY(ball.pos), cScale * ball.radius, 0.0, 2.0 * Math.PI); 
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
+            // collision handling
+            function handleWallCollision(ball,worldSize) {
+                if (ball.pos.x < 0.0 + ball.radius) {
+                    ball.pos.x = ball.radius;
+                    ball.vel.x = -ball.vel.x;
+                }
+                if (ball.pos.y < 0.0 + ball.radius) {
+                    ball.pos.y = ball.radius;
+                    ball.vel.y = -ball.vel.y;
+                }
+                if (ball.pos.x > worldSize.x - ball.radius) {
+                    ball.pos.x = worldSize.x - ball.radius;
+                    ball.vel.x = -ball.vel.x;
+                }
+                if (ball.pos.y > worldSize.y - ball.radius) {
+                    ball.pos.y = worldSize.y - ball.radius;
+                    ball.vel.y = -ball.vel.y;
+                }
+            }
+
+            function handleBallCollision(ball1,ball2,restitution) {
+                var dir = new Vector2();
+                dir.subtractVectors(ball2.pos,ball1.pos);
+                var d = dir.length();
+                if (d == 0.0 || d > ball1.radius + ball2.radius)
+                    return;
+
+                dir.scale(1.0/d);
+
+                var corr = (ball1.radius + ball2.radius - d) / 2.0;
+                ball1.pos.add(dir, -corr);
+                ball2.pos.add(dir, corr);
+
+                var v1 = ball1.vel.dot(dir);
+                var v2 = ball2.vel.dot(dir);
+
+                var m1 = ball1.mass;
+                var m2 = ball2.mass;
+
+                var v1f = (m1*v1 + m2*v2 - m2*(v1-v2)*restitution)/(m1+m2);
+                var v2f = (m1*v1 + m2*v2 - m1*(v2-v1)*restitution)/(m1+m2);
+
+                ball1.vel.add(dir,v1f-v1);
+                ball2.vel.add(dir,v2f-v2);
+            }
+
+            //simulation
+            function simulate(){
+                //get physics scene
+                for (i=0; i<physicsScene.balls.length; i++) {
+                    var ball1 = physicsScene.balls[i];
+                    //integrate dt for each object
+                    ball1.integrate(physicsScene.dt,physicsScene.gravity);
+                    //handle collisions betwwen objects
+                    for (j=i+1;j<physicsScene.balls.length; j++) {
+                        var ball2 = physicsScene.balls[j];
+                        handleBallCollision(ball1,ball2,physicsScene.restitution);
+                    }
+                    //handle boundary collision
+                    handleWallCollision(ball1,physicsScene.worldSize);
+                }
+            }
+
+            //Update simulation
+            function update(){
+                simulate();
+                draw();
+                requestAnimationFrame(update);
+            }
+
+            setupScene(); 
+
+            update();
+
+            document.getElementById("restitutionSlider").oninput = function() {
+                physicsScene.restitution = this.value;
+            }
+
+        </script>
+    </body>
+</html>

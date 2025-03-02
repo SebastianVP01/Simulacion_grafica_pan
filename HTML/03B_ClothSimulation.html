@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        .header {
+            margin: 5px;
+            padding: 10px;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            font-size: 20px;
+            font-style: oblique;
+            font-weight: bold;
+            border: 5px solid rgb(2, 7, 1);
+            color: rgb(3, 17, 20);
+            text-align: center;
+        }
+        .experiment{
+            padding: 15px;
+            text-align: center;
+            background-color: rgb(191, 190, 204);
+		    border: 5px solid rgb(2, 7, 1);
+        }
+        .side{
+            padding: 15px;
+		    border: 5px solid rgb(2, 7, 1);
+        }
+        .imgcenter{
+            text-align: center;
+        }
+        .imgcenter img{
+            width: 40%;
+        }
+        #gc {
+            border: 1px solid black;
+            background-color: white;
+        }
+    </style>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta name="author" content="David"/>
+        <meta name="description" content="2D cloth simulation of a brain structure slice built with the HTML5 canvas"/>
+        <title>David | Brain as Cloth Simulation</title>
+        <script type="text/javascript" charset="utf-8" src="lib/mootools-1.2.4-core-yc.js"></script>
+        <script type="text/javascript" charset="utf-8" src="source/fast_vector.js"></script>
+        <script type="text/javascript" charset="utf-8" src="source/fast_vector.js"></script>
+        <script type="text/javascript" charset="utf-8" src="source/canvas.js"></script>
+        <script type="text/javascript" charset="utf-8" src="source/point.js"></script>
+        <script type="text/javascript" charset="utf-8" src="source/constraint.js"></script>
+        <script type="text/javascript" charset="utf-8" src="source/cloth2.js"></script>
+    </head>
+    <body>
+        <!-- <div class="header">
+            <h1>Brain deformation simulation for the Brain/MINDS Hackathon 2023.</h1>
+        </div> -->
+        <div style="width: 100%; display: table;">
+            <div style="display: table-row;">
+                <div style="display: table-cell; padding: 10px;">
+                    <div class="experiment">
+                        <p>Click and drag to move points. Hold down any key to pin them.</p>
+                        <p> <input type="checkbox" id="constraints" checked="checked"/>
+                            Draw Lines &nbsp;<input type="checkbox" id="points"/>
+                            Draw Points<br/>
+                        </p>
+                        <canvas id="gc" width="850px" height="850px" >
+                            <strong>This browser does not support canvas </strong>
+                
+                        </canvas>
+                        
+                    </div>
+                </div>
+                <div style="display: table-cell; padding: 10px;"> 
+                    <div class="side">
+                        <h3 style="text-align: center;">Brain deformation simulation for the Brain/MINDS Hackathon 2023.</h3>
+                        <div class="imgcenter">
+                            <img src="./Hackathon23_v2-3.png">
+                        </div>
+                        <p>Using the Brain/MINDS 3D Marmoset Reference Brain Atlas 2019 segmentation for the left hemisphere of the cortex region (Yellow) a simple 2D grid model was generated.</p>
+                        <div class="imgcenter">
+                            <img src="./LH.png">
+                        </div>
+                        <p>The one shown on the left is one slice of the volume, this data is shown as a grayscale image, black pixels are not considered for the simulation.</p>
+                        <div class="imgcenter">
+                            <img src="./braintest.bmp">
+                        </div>
+                        <p>Full 3D volume of the region including boundary and volume was generated from this data, but a 3D Hybrid SPH and elastic simulation was not achieved during hackathon.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

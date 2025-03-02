@@ -1,0 +1,88 @@
+<!-- clase del 1 de febrero 2024 -->
+
+<!DOCTYPE html>
+<html>
+    <style>
+        #myCanvas {
+            border: blue 2px solid;
+            background-color: bisque;
+        }
+    </style>
+    <head>
+        <title>2D parabolic movement</title>
+    </head>
+    <body>
+        <canvas id="myCanvas"></canvas>
+
+        <script>
+            // Canvas
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            canvas.width = window.innerWidth - 50;
+            canvas.height = window.innerHeight - 50;
+
+            var minWidth4Sim = 20.0;
+            var cScale = Math.min(canvas.width,canvas.height) / minWidth4Sim;
+            var simWidth = canvas.width / cScale;
+            var simHeight = canvas.height / cScale;
+
+            // transform coordinate system simulation to canvas
+            function cX(pos) {
+                return pos.x * cScale;
+            }
+        
+            function cY(pos) {
+                return canvas.height - (pos.y * cScale);
+            }
+
+            var projectile = { radius: 0.2, pos: {x:0.2, y:0.2}, vel:{x:10.0, y:15.0}, acc:{x:0.0,y:0.0}, damp:0.99};
+            var gravity = {x: 0.0 , y: -9.81};
+            var dt = 1.0 / 240.0;
+            
+            //visualize data
+            function draw(){
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.fillstyle = "#FF8800";
+                ctx.beginPath();
+                ctx.arc(cX(projectile.pos), cY(projectile.pos), cScale * projectile.radius, 0.0, 2.0 * Math.PI);
+                ctx.closePath();
+                ctx.fill()
+            }
+
+            //simulation
+            function simulate(){
+                projectile.acc.x = gravity.x;
+                projectile.acc.y = gravity.y;
+                projectile.vel.x = projectile.vel.x + projectile.acc.x * dt;
+                projectile.vel.y += projectile.acc.y * dt;
+                projectile.pos.x += projectile.vel.x * dt;
+                projectile.pos.y += projectile.vel.y * dt;
+
+                if (projectile.pos.x > simWidth) {
+                    projectile.pos.x = simWidth;
+                    projectile.vel.x = -projectile.damp * projectile.vel.x;
+                }
+                if (projectile.pos.y < 0.0) {
+                    projectile.pos.y = 0.0;
+                    projectile.vel.y = -projectile.vel.y;
+                }
+                if (projectile.pos.x < 0.0) {
+                    projectile.pos.x = 0.0;
+                    projectile.vel.x = -projectile.damp * projectile.vel.x;
+                }
+
+                //console.log(projectile.pos)
+            }
+
+            //Update simulation
+            function update(){
+                simulate();
+                draw();
+                requestAnimationFrame(update);
+            }
+
+            update();
+
+        </script>
+    </body>
+</html>
